@@ -209,23 +209,42 @@ class action_plugin_translation extends DokuWiki_Action_Plugin {
         global $lang;
         global $conf;
         global $ACT;
+
+        // try to load language from session/cookie - stick to language selected by the user previously
+        if (!empty($_SESSION[DOKU_COOKIE]['translationlc']))
+            $lc = $_SESSION[DOKU_COOKIE]['translationlc'];
+        else if (!empty(get_doku_pref('plugin_translation_lc', null)))
+            $lc = get_doku_pref('plugin_translation_lc', null);
+
         // redirect away from start page?
-        if($this->conf['redirectstart'] && $ID == $conf['start'] && $ACT == 'show') {
-            $lc = $this->helper->getBrowserLang();
+        if(empty($lc) && $this->conf['redirectstart'] && $ID == $conf['start'] && $ACT == 'show') {
+            $lc = $this->helper->getBrowserLang($conf['lang']);
             if(!$lc) $lc = $conf['lang'];
-            header('Location: ' . wl($lc . ':' . $conf['start'], '', true, '&'));
-            exit;
+            if ($lc != $conf['lang']) {
+                $_SESSION[DOKU_COOKIE]['translationlc'] = $lc;
+                set_doku_pref('plugin_translation_lc', $lc);
+                header('Location: ' . wl($lc . ':' . $conf['start'], '', true, '&'));
+                exit;
+            }
         }
 
         // check if we are in a foreign language namespace
-        $lc = $this->helper->getLangPart($ID);
+        $newLc = $this->helper->getLangPart($ID);
+        if (empty($newLc))
+            $lc = $conf['lang'];
+        else if ($newLc != $lc)
+            $lc = $newLc;
 
         // store language in session (for page related views only)
         if(in_array($ACT, array('show', 'recent', 'diff', 'edit', 'preview', 'source', 'subscribe'))) {
             $_SESSION[DOKU_COOKIE]['translationlc'] = $lc;
+            set_doku_pref('plugin_translation_lc', $lc);
         }
-        if(!$lc) $lc = $_SESSION[DOKU_COOKIE]['translationlc'];
-        if(!$lc) return;
+        // stop. no effort is needed
+        if($lc == $conf['lang'])
+            return;
+
+        // adjust environment to the selected language
         $this->locale = $lc;
 
         if(!$this->getConf('translateui')) {

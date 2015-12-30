@@ -79,8 +79,8 @@ class helper_plugin_translation extends DokuWiki_Plugin {
      * Returns the browser language if it matches with one of the configured
      * languages
      */
-    function getBrowserLang() {
-        $rx = '/(^|,|:|;|-)(' . join('|', $this->translations) . ')($|,|:|;|-)/i';
+    function getBrowserLang($defaultLang = '') {
+        $rx = '/(^|,|:|;|-)(' . join('|', array_merge(array($defaultLang), $this->translations)) . ')($|,|:|;|-)/i';
         if(preg_match($rx, $_SERVER['HTTP_ACCEPT_LANGUAGE'], $match)) {
             return strtolower($match[2]);
         }
