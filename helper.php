@@ -80,7 +80,8 @@ class helper_plugin_translation extends DokuWiki_Plugin {
      * languages
      */
     function getBrowserLang($defaultLang = '') {
-        $rx = '/(^|,|:|;|-)(' . join('|', array_merge(array($defaultLang), $this->translations)) . ')($|,|:|;|-)/i';
+        $rx = '/(^|,|:|;|-)(' . join('|', array_unique(
+                    array_merge(array($defaultLang), $this->translations))) . ')($|,|:|;|-)/i';
         if(preg_match($rx, $_SERVER['HTTP_ACCEPT_LANGUAGE'], $match)) {
             return strtolower($match[2]);
         }
